@@ -4,5 +4,3 @@ ENDIF()
 
 
 ADD_SUBDIRECTORY(osgQt)
-ADD_SUBDIRECTORY(osgPlugins)
-

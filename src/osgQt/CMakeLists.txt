@@ -45,7 +45,12 @@ SET(TARGET_SRC
     ${OPENSCENEGRAPH_VERSIONINFO_RC}
 )
 
+IF( QT4_FOUND)
+    SET(TARGET_SRC ${TARGET_SRC} ReaderQFont.cpp)
+ENDIF()
+
 SET(TARGET_LIBRARIES
+    osgText
     osgWidget
     osgDB
     osgUtil
