@@ -963,19 +963,19 @@ IF(REQUIRES_LIBPATH_MESSAGE)
             "Your applications may not be able to find your installed libraries unless you:\n"
             "    set your LD_LIBRARY_PATH (user specific) or\n"
             "    update your ld.so configuration (system wide)")
-        IF(IS_DIRECTORY /etc/ld.so.conf.d)
+        IF(IS_DIRECTORY /etc/ld.so.conf.d AND EXISTS ${PROJECT_SOURCE_DIR}/packaging/ld.so.conf.d/openscenegraph-osgQt.conf.in)
             MESSAGE("You have an ld.so.conf.d directory on your system, so if you wish to ensure that\n"
                 "applications find the installed osg libraries, system wide, you could install an\n"
                 "OpenSceneGraph specific ld.so configuration with:\n"
                 "    sudo make install_ld_conf\n")
-            CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/ld.so.conf.d/openscenegraph.conf.in
-                ${PROJECT_BINARY_DIR}/packaging/ld.so.conf.d/openscenegraph.conf
+            CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/ld.so.conf.d/openscenegraph-osgQt.conf.in
+                ${PROJECT_BINARY_DIR}/packaging/ld.so.conf.d/openscenegraph-osgQt.conf
             )
             ADD_CUSTOM_TARGET(install_ld_conf ${CMAKE_COMMAND} -E copy_if_different
-                ${PROJECT_BINARY_DIR}/packaging/ld.so.conf.d/openscenegraph.conf
-                /etc/ld.so.conf.d/openscenegraph.conf
+                ${PROJECT_BINARY_DIR}/packaging/ld.so.conf.d/openscenegraph-osgQt.conf
+                /etc/ld.so.conf.d/openscenegraph-osgQt.conf
                 COMMAND ldconfig
-                COMMENT "Copying openscenegraph.conf to /etc/ld.so.conf.d and running ldconfig"
+                COMMENT "Copying openscenegraph-osgQt.conf to /etc/ld.so.conf.d and running ldconfig"
             )
         ELSE()
             IF(EXISTS /etc/ld.so.conf)
