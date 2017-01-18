@@ -427,13 +427,13 @@ ENDIF(WIN32 AND NOT ANDROID)
 
 ################################################################################
 # Set Version Info resource file
-
-
-IF(MSVC)
-    SET(OPENSCENEGRAPH_VERSIONINFO_RC "${PROJECT_BINARY_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc")
-    CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc.in"
-                   "${OPENSCENEGRAPH_VERSIONINFO_RC}")
-ENDIF()
+#
+# Removed for now as this relates to OSG version
+# IF(MSVC)
+#     SET(OPENSCENEGRAPH_VERSIONINFO_RC "${PROJECT_BINARY_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc")
+#     CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc.in"
+#                    "${OPENSCENEGRAPH_VERSIONINFO_RC}")
+# ENDIF()
 
 ################################################################################
 # Optional build components
