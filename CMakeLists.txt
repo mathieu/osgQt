@@ -427,13 +427,13 @@ ENDIF(WIN32 AND NOT ANDROID)
 
 ################################################################################
 # Set Version Info resource file
-
-
-IF(MSVC)
-    SET(OPENSCENEGRAPH_VERSIONINFO_RC "${PROJECT_BINARY_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc")
-    CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc.in"
-                   "${OPENSCENEGRAPH_VERSIONINFO_RC}")
-ENDIF()
+#
+# Removed for now as this relates to OSG version
+# IF(MSVC)
+#     SET(OPENSCENEGRAPH_VERSIONINFO_RC "${PROJECT_BINARY_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc")
+#     CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc.in"
+#                    "${OPENSCENEGRAPH_VERSIONINFO_RC}")
+# ENDIF()
 
 ################################################################################
 # Optional build components
@@ -441,12 +441,6 @@ ENDIF()
 
 # OSG Examples
 OPTION(BUILD_OSG_EXAMPLES "Enable to build OSG Examples" OFF)
-
-################################################################################
-# 3rd Party Dependency Stuff
-IF(WIN32)
-    INCLUDE(Find3rdPartyDependencies)
-ENDIF()
 
 #
 # If you want to prevent CMake from picking up on any of the following optional 3rd Party dependencies in CMake 2.8 onwards
