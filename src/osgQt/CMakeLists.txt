@@ -5,8 +5,12 @@ ELSE()
     ADD_DEFINITIONS(-DOSG_LIBRARY_STATIC)
 ENDIF()
 
-SET(LIB_NAME osgQt)
-SET(HEADER_PATH ${OpenSceneGraph_SOURCE_DIR}/include/${LIB_NAME})
+IF ( Qt5Widgets_FOUND )
+    SET(LIB_NAME osgQt5)
+ELSE()
+    SET(LIB_NAME osgQt)
+ENDIF()
+SET(HEADER_PATH ${OpenSceneGraph_SOURCE_DIR}/include/osgQt)
 
 SET(SOURCES_H
     ${HEADER_PATH}/QGraphicsViewAdapter

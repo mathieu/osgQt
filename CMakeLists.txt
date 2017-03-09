@@ -930,18 +930,17 @@ IF(CMAKE_CPACK_COMMAND)
 ENDIF()
 
 # Generate pkg-config configuration files
+IF ( Qt5Widgets_FOUND )
+    SET ( PKGCONFIG_MODULE_NAME osgQt5 )
+ELSE()
+    SET ( PKGCONFIG_MODULE_NAME osgQt )
+ENDIF()
 
-SET(PKGCONFIG_FILES
-  openscenegraph-osgQt
-)
-
-FOREACH(PKGCONFIG_FILE ${PKGCONFIG_FILES})
-  CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/pkgconfig/${PKGCONFIG_FILE}.pc.in
-    ${PROJECT_BINARY_DIR}/packaging/pkgconfig/${PKGCONFIG_FILE}.pc
-    @ONLY
-    )
-  INSTALL(FILES ${PROJECT_BINARY_DIR}/packaging/pkgconfig/${PKGCONFIG_FILE}.pc DESTINATION lib${LIB_POSTFIX}/pkgconfig COMPONENT libopenscenegraph-dev)
-ENDFOREACH(PKGCONFIG_FILE)
+CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/pkgconfig/openscenegraph-osgQt.pc.in
+  ${PROJECT_BINARY_DIR}/packaging/pkgconfig/openscenegraph-${PKGCONFIG_MODULE_NAME}.pc
+  @ONLY
+  )
+INSTALL(FILES ${PROJECT_BINARY_DIR}/packaging/pkgconfig/openscenegraph-${PKGCONFIG_MODULE_NAME}.pc DESTINATION lib${LIB_POSTFIX}/pkgconfig COMPONENT libopenscenegraph-dev)
 
 
 # Run this as late as possible so users can easier spot the message
