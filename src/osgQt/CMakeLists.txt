@@ -26,9 +26,6 @@ ELSE()
     set(OSGQT_QT_VERSION 4)
 ENDIF()
 
-SET(OSGQT_VERSION_HEADER "${PROJECT_BINARY_DIR}/include/osgQt/Version")
-CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/Version.in" ${OSGQT_VERSION_HEADER})
-
 SET(TARGET_H
     ${HEADER_PATH}/Export
     ${HEADER_PATH}/GraphicsWindowQt
@@ -36,7 +33,6 @@ SET(TARGET_H
     ${HEADER_PATH}/QGraphicsViewAdapter
     ${HEADER_PATH}/QWidgetImage
     ${HEADER_PATH}/QWebViewImage
-    ${OSGQT_VERSION_HEADER}
 )
 
 
