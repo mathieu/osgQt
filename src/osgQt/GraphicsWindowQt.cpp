@@ -285,8 +285,9 @@ void GLWidget::setKeyboardModifiers( QInputEvent* event )
 
 void GLWidget::resizeEvent( QResizeEvent* event )
 {
+    if (_gw == NULL || !_gw->valid())
+		return;    
     const QSize& size = event->size();
-
     int scaled_width = static_cast<int>(size.width()*_devicePixelRatio);
     int scaled_height = static_cast<int>(size.height()*_devicePixelRatio);
     _gw->resized( x(), y(), scaled_width,  scaled_height);
@@ -296,6 +297,8 @@ void GLWidget::resizeEvent( QResizeEvent* event )
 
 void GLWidget::moveEvent( QMoveEvent* event )
 {
+    if (_gw == NULL || !_gw->valid())
+		return; 
     const QPoint& pos = event->pos();
     int scaled_width = static_cast<int>(width()*_devicePixelRatio);
     int scaled_height = static_cast<int>(height()*_devicePixelRatio);
