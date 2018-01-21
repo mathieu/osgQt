@@ -878,10 +878,6 @@ IF(BUILD_DOCUMENTATION)
         SET(GENERATE_TAGFILE "${OpenSceneGraph_BINARY_DIR}/doc/OpenThreadsReferenceDocs/ot.tag")
     ENDIF()
 
-    # This processes our openthreads.doxyfile.cmake and generate a final doxyfile
-    CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/doc/Doxyfiles/openthreads.doxyfile.cmake
-        ${PROJECT_BINARY_DIR}/doc/openthreads.doxyfile
-    )
     # copy the osg logo to documentations target folder
     CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/PlatformSpecifics/Windows/icons/src/osg32-32.png
         ${PROJECT_BINARY_DIR}/doc/OpenThreadsReferenceDocs/osg32-32.png COPYONLY
