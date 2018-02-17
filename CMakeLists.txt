@@ -1,17 +1,11 @@
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-IF(WIN32)
-    CMAKE_MINIMUM_REQUIRED(VERSION 2.4.6 FATAL_ERROR)
-ELSE(WIN32)
-    IF(APPLE)
-        CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0 FATAL_ERROR)
-    ELSE(APPLE)
-        CMAKE_MINIMUM_REQUIRED(VERSION 2.4.4 FATAL_ERROR)
-    ENDIF(APPLE)
-ENDIF(WIN32)
 
-if(COMMAND cmake_policy)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0.0 FATAL_ERROR)
+
+
+#[[if(COMMAND cmake_policy)
     # Works around warnings libraries linked against that don't
     # have absolute paths (e.g. -lpthreads)
     cmake_policy(SET CMP0003 NEW)
@@ -47,7 +41,7 @@ if(COMMAND cmake_policy)
     # or even easier (available in cmake-2.6)
     #if(POLICY CMPxyzw)
 
-endif()
+endif()]]
 
 IF(APPLE)
   # Get OSX version in MAJOR.MINOR format
@@ -468,6 +462,7 @@ ELSE()
     FIND_PACKAGE(Qt5Widgets QUIET)
 
     IF ( Qt5Widgets_FOUND )
+        FIND_PACKAGE(Qt5OpenGL QUIET)
         # CMake 2.8.8 or greater required
         BUILDER_VERSION_GREATER(2 8 7)
         IF(NOT VALID_BUILDER_VERSION)

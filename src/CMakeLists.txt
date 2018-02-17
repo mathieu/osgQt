@@ -3,4 +3,8 @@ IF(MSVC80 OR MSVC90)
 ENDIF()
 
 
-ADD_SUBDIRECTORY(osgQt)
+if(Qt5Widgets_FOUND)
+	add_subdirectory(osgQOpenGL)
+else()
+	add_subdirectory(osgQt)
+endif()
