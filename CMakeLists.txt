@@ -127,7 +127,7 @@ ENDIF()
 
 PROJECT(osgQt)
 
-FIND_PACKAGE(OpenSceneGraph 3.5.5 REQUIRED osgDB osgGA osgUtil osgText osgViewer osgWidget)
+FIND_PACKAGE(OpenSceneGraph 3.5.6 REQUIRED osgDB osgGA osgUtil osgText osgViewer osgWidget)
 SET(OPENSCENEGRAPH_SOVERSION 145)
 
 SET(OSG_PLUGINS osgPlugins-${OPENSCENEGRAPH_VERSION})
@@ -427,13 +427,13 @@ ENDIF(WIN32 AND NOT ANDROID)
 
 ################################################################################
 # Set Version Info resource file
-
-
-IF(MSVC)
-    SET(OPENSCENEGRAPH_VERSIONINFO_RC "${PROJECT_BINARY_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc")
-    CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc.in"
-                   "${OPENSCENEGRAPH_VERSIONINFO_RC}")
-ENDIF()
+#
+# Removed for now as this relates to OSG version
+# IF(MSVC)
+#     SET(OPENSCENEGRAPH_VERSIONINFO_RC "${PROJECT_BINARY_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc")
+#     CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc.in"
+#                    "${OPENSCENEGRAPH_VERSIONINFO_RC}")
+# ENDIF()
 
 ################################################################################
 # Optional build components
@@ -441,12 +441,6 @@ ENDIF()
 
 # OSG Examples
 OPTION(BUILD_OSG_EXAMPLES "Enable to build OSG Examples" OFF)
-
-################################################################################
-# 3rd Party Dependency Stuff
-IF(WIN32)
-    INCLUDE(Find3rdPartyDependencies)
-ENDIF()
 
 #
 # If you want to prevent CMake from picking up on any of the following optional 3rd Party dependencies in CMake 2.8 onwards
@@ -464,14 +458,14 @@ INCLUDE(OsgMacroUtils)
 
 IF  (DESIRED_QT_VERSION)
     IF  (DESIRED_QT_VERSION MATCHES 5)
-        FIND_PACKAGE(Qt5Widgets REQUIRED)
+        FIND_PACKAGE(Qt5 COMPONENTS Widgets REQUIRED)
     ELSEIF (DESIRED_QT_VERSION MATCHES 4)
         FIND_PACKAGE(Qt4 REQUIRED)
     ENDIF()
 
 ELSE()
 
-    FIND_PACKAGE(Qt5Widgets QUIET)
+    FIND_PACKAGE(Qt5 COMPONENTS Widgets REQUIRED)
 
     IF ( Qt5Widgets_FOUND )
         # CMake 2.8.8 or greater required
@@ -884,10 +878,6 @@ IF(BUILD_DOCUMENTATION)
         SET(GENERATE_TAGFILE "${OpenSceneGraph_BINARY_DIR}/doc/OpenThreadsReferenceDocs/ot.tag")
     ENDIF()
 
-    # This processes our openthreads.doxyfile.cmake and generate a final doxyfile
-    CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/doc/Doxyfiles/openthreads.doxyfile.cmake
-        ${PROJECT_BINARY_DIR}/doc/openthreads.doxyfile
-    )
     # copy the osg logo to documentations target folder
     CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/PlatformSpecifics/Windows/icons/src/osg32-32.png
         ${PROJECT_BINARY_DIR}/doc/OpenThreadsReferenceDocs/osg32-32.png COPYONLY
@@ -936,18 +926,17 @@ IF(CMAKE_CPACK_COMMAND)
 ENDIF()
 
 # Generate pkg-config configuration files
+IF ( Qt5Widgets_FOUND )
+    SET ( PKGCONFIG_MODULE_NAME osgQt5 )
+ELSE()
+    SET ( PKGCONFIG_MODULE_NAME osgQt )
+ENDIF()
 
-SET(PKGCONFIG_FILES
-  openscenegraph-osgQt
-)
-
-FOREACH(PKGCONFIG_FILE ${PKGCONFIG_FILES})
-  CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/pkgconfig/${PKGCONFIG_FILE}.pc.in
-    ${PROJECT_BINARY_DIR}/packaging/pkgconfig/${PKGCONFIG_FILE}.pc
-    @ONLY
-    )
-  INSTALL(FILES ${PROJECT_BINARY_DIR}/packaging/pkgconfig/${PKGCONFIG_FILE}.pc DESTINATION lib${LIB_POSTFIX}/pkgconfig COMPONENT libopenscenegraph-dev)
-ENDFOREACH(PKGCONFIG_FILE)
+CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/pkgconfig/openscenegraph-osgQt.pc.in
+  ${PROJECT_BINARY_DIR}/packaging/pkgconfig/openscenegraph-${PKGCONFIG_MODULE_NAME}.pc
+  @ONLY
+  )
+INSTALL(FILES ${PROJECT_BINARY_DIR}/packaging/pkgconfig/openscenegraph-${PKGCONFIG_MODULE_NAME}.pc DESTINATION lib${LIB_POSTFIX}/pkgconfig COMPONENT libopenscenegraph-dev)
 
 
 # Run this as late as possible so users can easier spot the message
@@ -963,19 +952,19 @@ IF(REQUIRES_LIBPATH_MESSAGE)
             "Your applications may not be able to find your installed libraries unless you:\n"
             "    set your LD_LIBRARY_PATH (user specific) or\n"
             "    update your ld.so configuration (system wide)")
-        IF(IS_DIRECTORY /etc/ld.so.conf.d)
+        IF(IS_DIRECTORY /etc/ld.so.conf.d AND EXISTS ${PROJECT_SOURCE_DIR}/packaging/ld.so.conf.d/openscenegraph-osgQt.conf.in)
             MESSAGE("You have an ld.so.conf.d directory on your system, so if you wish to ensure that\n"
                 "applications find the installed osg libraries, system wide, you could install an\n"
                 "OpenSceneGraph specific ld.so configuration with:\n"
                 "    sudo make install_ld_conf\n")
-            CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/ld.so.conf.d/openscenegraph.conf.in
-                ${PROJECT_BINARY_DIR}/packaging/ld.so.conf.d/openscenegraph.conf
+            CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/ld.so.conf.d/openscenegraph-osgQt.conf.in
+                ${PROJECT_BINARY_DIR}/packaging/ld.so.conf.d/openscenegraph-osgQt.conf
             )
             ADD_CUSTOM_TARGET(install_ld_conf ${CMAKE_COMMAND} -E copy_if_different
-                ${PROJECT_BINARY_DIR}/packaging/ld.so.conf.d/openscenegraph.conf
-                /etc/ld.so.conf.d/openscenegraph.conf
+                ${PROJECT_BINARY_DIR}/packaging/ld.so.conf.d/openscenegraph-osgQt.conf
+                /etc/ld.so.conf.d/openscenegraph-osgQt.conf
                 COMMAND ldconfig
-                COMMENT "Copying openscenegraph.conf to /etc/ld.so.conf.d and running ldconfig"
+                COMMENT "Copying openscenegraph-osgQt.conf to /etc/ld.so.conf.d and running ldconfig"
             )
         ELSE()
             IF(EXISTS /etc/ld.so.conf)

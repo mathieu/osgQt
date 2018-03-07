@@ -209,6 +209,7 @@ ENDMACRO(SET_OUTPUT_DIR_PROPERTY_260 TARGET_TARGETNAME RELATIVE_OUTDIR)
 #  TARGET_LIBRARIES are the libraries to link to that are internal to the project and have d suffix for debug
 #  TARGET_EXTERNAL_LIBRARIES are external libraries and are not differentiated with d suffix
 #  TARGET_LABEL is the label IDE should show up for targets
+#  HEADER_INSTALL_DIR the directory relative to include/ where the ModuleInstall script installs the headers - defaults to LIB_NAME
 ##########################################################################################################
 
 MACRO(SETUP_LIBRARY LIB_NAME)

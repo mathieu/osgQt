@@ -5,8 +5,13 @@ ELSE()
     ADD_DEFINITIONS(-DOSG_LIBRARY_STATIC)
 ENDIF()
 
-SET(LIB_NAME osgQt)
-SET(HEADER_PATH ${OpenSceneGraph_SOURCE_DIR}/include/${LIB_NAME})
+IF ( Qt5Widgets_FOUND )
+    SET(LIB_NAME osgQt5)
+    SET(HEADER_INSTALL_DIR osgQt)
+ELSE()
+    SET(LIB_NAME osgQt)
+ENDIF()
+SET(HEADER_PATH ${OpenSceneGraph_SOURCE_DIR}/include/osgQt)
 
 SET(SOURCES_H
     ${HEADER_PATH}/QGraphicsViewAdapter
@@ -21,9 +26,6 @@ ELSE()
     set(OSGQT_QT_VERSION 4)
 ENDIF()
 
-SET(OSGQT_VERSION_HEADER "${PROJECT_BINARY_DIR}/include/osgQt/Version")
-CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/Version.in" ${OSGQT_VERSION_HEADER})
-
 SET(TARGET_H
     ${HEADER_PATH}/Export
     ${HEADER_PATH}/GraphicsWindowQt
@@ -31,7 +33,6 @@ SET(TARGET_H
     ${HEADER_PATH}/QGraphicsViewAdapter
     ${HEADER_PATH}/QWidgetImage
     ${HEADER_PATH}/QWebViewImage
-    ${OSGQT_VERSION_HEADER}
 )
 
 

@@ -15,7 +15,11 @@ endif( QT4_FOUND )
 SET(TARGET_LIBRARIES  ${OPENSCENEGRAPH_LIBRARIES})
 
 #### end var setup  ###
-SET ( EXAMPLE_NAME osgQtWidgets )
+IF ( Qt5Widgets_FOUND )
+    SET ( EXAMPLE_NAME osgQt5Widgets )
+ELSE()
+    SET ( EXAMPLE_NAME osgQtWidgets )
+ENDIF()
 SETUP_EXAMPLE(${EXAMPLE_NAME})
 
 IF ( Qt5Widgets_FOUND )

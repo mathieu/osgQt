@@ -21,6 +21,12 @@
 #include <QImage>
 #include <QPainter>
 
+
+#ifndef OSGTEXT_GLYPH_INTERNALFORMAT
+    #define OSGTEXT_GLYPH_INTERNALFORMAT GL_ALPHA
+    #define OSGTEXT_GLYPH_FORMAT GL_ALPHA
+#endif
+
 namespace osgQt {
 
 QFontImplementation::QFontImplementation(const QFont& font) :
