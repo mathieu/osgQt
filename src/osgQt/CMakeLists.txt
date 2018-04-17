@@ -85,5 +85,5 @@ ENDIF( QT4_FOUND )
 SETUP_LIBRARY(${LIB_NAME})
 
 IF ( Qt5Widgets_FOUND )
-    qt5_use_modules( ${LIB_NAME} Widgets OpenGL )
+    TARGET_LINK_LIBRARIES( ${LIB_NAME} Qt5::Widgets Qt5::OpenGL )
 ENDIF ( Qt5Widgets_FOUND )
