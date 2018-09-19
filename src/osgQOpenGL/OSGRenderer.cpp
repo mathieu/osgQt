@@ -128,6 +128,18 @@ OSGRenderer::OSGRenderer(QObject* parent)
     //    });
 }
 
+OSGRenderer::OSGRenderer(osg::ArgumentParser* arguments, QObject* parent)
+    : QObject(parent), osgViewer::Viewer(*arguments)
+{
+    //    QObject::connect(QCoreApplication::instance(), &QCoreApplication::aboutToQuit,
+    //                     [this]()
+    //    {
+    //        _applicationAboutToQuit = true;
+    //        killTimer(_timerId);
+    //        _timerId = 0;
+    //    });
+}
+
 OSGRenderer::~OSGRenderer()
 {
 }
@@ -160,9 +172,11 @@ void OSGRenderer::resize(int windowWidth, int windowHeight, float windowScale)
     /*  _camera->setViewport(new osg::Viewport(0, 0, windowWidth * windowScale,
                                            windowHeight * windowScale));*/
 
-    m_osgWinEmb->resized(0, 0, windowWidth * windowScale,
+    m_osgWinEmb->resized(0, 0,
+                         windowWidth * windowScale,
                          windowHeight * windowScale);
-    m_osgWinEmb->getEventQueue()->windowResize(0, 0, windowWidth * windowScale,
+    m_osgWinEmb->getEventQueue()->windowResize(0, 0,
+                                               windowWidth * windowScale,
                                                windowHeight * windowScale);
 
     update();
@@ -207,8 +221,9 @@ void OSGRenderer::setupOSG(int windowWidth, int windowHeight, float windowScale)
 
 void OSGRenderer::setKeyboardModifiers(QInputEvent* event)
 {
-    int modkey = event->modifiers() & (Qt::ShiftModifier | Qt::ControlModifier |
-                                       Qt::AltModifier);
+    unsigned int modkey = event->modifiers() & (Qt::ShiftModifier |
+                                                Qt::ControlModifier |
+                                                Qt::AltModifier);
     unsigned int mask = 0;
 
     if(modkey & Qt::ShiftModifier) mask |= osgGA::GUIEventAdapter::MODKEY_SHIFT;

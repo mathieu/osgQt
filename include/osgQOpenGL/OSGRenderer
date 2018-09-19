@@ -34,15 +34,15 @@ namespace eveBIM
 
 class OSGQOPENGL_EXPORT OSGRenderer : public QObject, public osgViewer::Viewer
 {
-    bool                                            m_osgInitialized {false};
-    osg::ref_ptr<osgViewer::GraphicsWindow>         m_osgWinEmb;
-    float                                           m_windowScale {1.0f};
-    bool                                            m_continuousUpdate {true};
+    bool                                       m_osgInitialized {false};
+    osg::ref_ptr<osgViewer::GraphicsWindow>    m_osgWinEmb;
+    float                                      m_windowScale {1.0f};
+    bool                                       m_continuousUpdate {true};
 
-    int _timerId{0};
-    osg::Timer _lastFrameStartTime;
-    bool _applicationAboutToQuit{false};
-    bool _osgWantsToRenderFrame{true};
+    int                                        _timerId{0};
+    osg::Timer                                 _lastFrameStartTime;
+    bool                                       _applicationAboutToQuit {false};
+    bool                                       _osgWantsToRenderFrame{true};
 
     Q_OBJECT
 
@@ -50,8 +50,10 @@ class OSGQOPENGL_EXPORT OSGRenderer : public QObject, public osgViewer::Viewer
 
 public:
 
-    explicit OSGRenderer(QObject* parent = 0);
-    virtual ~OSGRenderer();
+    explicit OSGRenderer(QObject* parent = nullptr);
+    explicit OSGRenderer(osg::ArgumentParser* arguments, QObject* parent = nullptr);
+
+    ~OSGRenderer() override;
 
     bool continuousUpdate() const
     {

@@ -17,6 +17,14 @@ osgQOpenGLWidget::osgQOpenGLWidget(QWidget* parent)
 {
 }
 
+osgQOpenGLWidget::osgQOpenGLWidget(osg::ArgumentParser* arguments,
+                                   QWidget* parent) :
+    QOpenGLWidget(parent),
+    _arguments(arguments)
+{
+
+}
+
 osgQOpenGLWidget::~osgQOpenGLWidget()
 {
 }
@@ -198,7 +206,7 @@ void osgQOpenGLWidget::createRenderer()
     // call this before creating a View...
     setDefaultDisplaySettings();
 
-    m_renderer = new OSGRenderer(this);
+    m_renderer = new OSGRenderer(_arguments, this);
     QScreen* screen = windowHandle()
                       && windowHandle()->screen() ? windowHandle()->screen() :
                       qApp->screens().front();

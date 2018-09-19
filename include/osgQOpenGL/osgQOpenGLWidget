@@ -16,6 +16,8 @@
 #include <osg/GL>
 #endif
 
+#include <osg/ArgumentParser>
+
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QReadWriteLock>
@@ -36,11 +38,13 @@ protected:
     OSGRenderer* m_renderer {nullptr};
     bool _osgWantsToRenderFrame{true};
     OpenThreads::ReadWriteMutex _osgMutex;
+    osg::ArgumentParser* _arguments {nullptr};
 
     friend class OSGRenderer;
 
 public:
     osgQOpenGLWidget(QWidget* parent = nullptr);
+    osgQOpenGLWidget(osg::ArgumentParser* arguments, QWidget* parent = nullptr);
     virtual ~osgQOpenGLWidget();
 
     /** Get osgViewer View */
