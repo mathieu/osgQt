@@ -4,45 +4,6 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.0.0 FATAL_ERROR)
 
-
-#[[if(COMMAND cmake_policy)
-    # Works around warnings libraries linked against that don't
-    # have absolute paths (e.g. -lpthreads)
-    cmake_policy(SET CMP0003 NEW)
-
-    # Works around warnings about escaped quotes in ADD_DEFINITIONS
-    # statements.
-    cmake_policy(SET CMP0005 NEW)
-
-    # tell CMake to prefer CMake's own CMake modules when available
-    # only available from cmake-2.8.4
-    if(${CMAKE_MAJOR_VERSION} GREATER 2 OR
-        (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} GREATER 8) OR
-        (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} EQUAL 8 AND ${CMAKE_PATCH_VERSION} GREATER 3))
-        cmake_policy(SET CMP0017 NEW)
-    endif()
-
-    # cmake-2.6.1 introduces policy cmp0008 decide how to treat full path libraries that do not appear to be valid library file names
-    # quote from cvslog "Such libraries worked by accident in the VS IDE and Xcode generators in CMake 2.4 and below."
-    if(${CMAKE_MAJOR_VERSION} GREATER 2 OR
-        (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} GREATER 6) OR
-        (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} EQUAL 6 AND ${CMAKE_PATCH_VERSION} GREATER 0))
-        cmake_policy(SET CMP0008 OLD)
-    endif()
-
-    # disable autolinking to qtmain as we have our own main() functions (new in Qt 5.1)
-    if(${CMAKE_MAJOR_VERSION} GREATER 2 OR
-        (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} GREATER 8) OR
-        (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} EQUAL 8 AND ${CMAKE_PATCH_VERSION} GREATER 10))
-        cmake_policy(SET CMP0020 OLD)
-    endif()
-    # nicer version check - but needs at least CMake 2.6.2? Worth upgrading the requirements?
-    #if("${CMAKE_VERSION}" VERSION_GREATER 2.8.10)
-    # or even easier (available in cmake-2.6)
-    #if(POLICY CMPxyzw)
-
-endif()]]
-
 IF(APPLE)
   # Get OSX version in MAJOR.MINOR format
   EXECUTE_PROCESS(COMMAND sw_vers -productVersion
@@ -86,6 +47,12 @@ IF(APPLE)
     SET(CMAKE_OSX_SYSROOT "${IPHONE_SDKROOT}" CACHE STRING "System root for iOS" FORCE)
 
   ELSE()
+    foreach(APPLE_SDK_VERSION 10 11 12 13 14 15)
+        if (IS_DIRECTORY "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.${APPLE_SDK_VERSION}.sdk")
+            set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.${APPLE_SDK_VERSION}.sdk")
+        endif()
+    endforeach(APPLE_SDK_VERSION)
+
     # OSX >= 10.5 uses Cocoa windowing system, otherwise Carbon
     IF(OSG_OSX_VERSION VERSION_LESS 10.5)
       SET(OSG_WINDOWING_SYSTEM "Carbon" CACHE STRING "Windowing system type for graphics window creation, options Carbon, Cocoa or X11.")
@@ -97,7 +64,11 @@ IF(APPLE)
     # and 32/64-bit Intel/PPC on >= 10.5. Anything <= 10.3 doesn't support.
     # These are set the first time CMake is run, and can be changed by
     # the user at any time.
-    IF(OSG_OSX_VERSION VERSION_GREATER 10.7)
+    IF(OSG_OSX_VERSION VERSION_GREATER 10.8)
+      # 64 Bit Works, i386,ppc is not supported any more
+      SET(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "Build architectures for OSX")
+      SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.10" CACHE STRING "Target OSX version")
+    ELSEIF(OSG_OSX_VERSION VERSION_GREATER 10.7)
       # 64 Bit Works, i386,ppc is not supported any more
       SET(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "Build architectures for OSX")
       SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.8" CACHE STRING "Target OSX version")
@@ -121,7 +92,7 @@ ENDIF()
 
 PROJECT(osgQt)
 
-FIND_PACKAGE(OpenSceneGraph 3.5.6 REQUIRED osgDB osgGA osgUtil osgText osgViewer osgWidget)
+FIND_PACKAGE(OpenSceneGraph 3.6.0 REQUIRED osgDB osgGA osgUtil osgText osgViewer osgWidget)
 SET(OPENSCENEGRAPH_SOVERSION 145)
 
 SET(OSG_PLUGINS osgPlugins-${OPENSCENEGRAPH_VERSION})
@@ -144,7 +115,7 @@ SET(OpenSceneGraph_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # We have some custom .cmake scripts not in the official distribution.
 # Maybe this can be used override existing behavior if needed?
-SET(CMAKE_MODULE_PATH "${OpenSceneGraph_SOURCE_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
+SET(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
 
 # Change the default build type to Release
 IF(NOT CMAKE_BUILD_TYPE)
@@ -286,6 +257,7 @@ IF(APPLE)
         ENDIF()
 
         FIND_PACKAGE(OpenGL)
+        add_definitions(-DGL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED)
     ENDIF ()
 
     OPTION(OSG_COMPILE_FRAMEWORKS "compile frameworks instead of dylibs (experimental)" OFF)
@@ -298,7 +270,8 @@ ENDIF()
 
 INCLUDE_DIRECTORIES(
     ${OPENSCENEGRAPH_INCLUDE_DIRS}
-    ${OpenSceneGraph_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_LIST_DIR}/include
+    ${CMAKE_CURRENT_BINARY_DIR}/src
     ${OPENGL_INCLUDE_DIR}
 )
 
@@ -434,7 +407,7 @@ ENDIF(WIN32 AND NOT ANDROID)
 
 
 # OSG Examples
-OPTION(BUILD_OSG_EXAMPLES "Enable to build OSG Examples" OFF)
+OPTION(BUILD_OSG_EXAMPLES "Enable to build OSG Examples" ON)
 
 #
 # If you want to prevent CMake from picking up on any of the following optional 3rd Party dependencies in CMake 2.8 onwards
@@ -450,47 +423,7 @@ INCLUDE(OsgMacroUtils)
 # via cmake -DDESIRED_QT_VERSION=5
 # QUIET option disables messages if the package cannot be found.
 
-IF  (DESIRED_QT_VERSION)
-    IF  (DESIRED_QT_VERSION MATCHES 5)
-        FIND_PACKAGE(Qt5Widgets REQUIRED)
-    ELSEIF (DESIRED_QT_VERSION MATCHES 4)
-        FIND_PACKAGE(Qt4 REQUIRED)
-    ENDIF()
-
-ELSE()
-
-    FIND_PACKAGE(Qt5Widgets QUIET)
-
-    IF ( Qt5Widgets_FOUND )
-        FIND_PACKAGE(Qt5OpenGL QUIET)
-        # CMake 2.8.8 or greater required
-        BUILDER_VERSION_GREATER(2 8 7)
-        IF(NOT VALID_BUILDER_VERSION)
-            MESSAGE(
-            SEND_ERROR
-            "Qt5 requires CMake version 2.8.8 or greater!\n"
-            "Update CMake or set DESIRED_QT_VERSION to less than 5
-            or disable OSG_USE_QT."
-            )
-        ENDIF( )
-    ENDIF( )
-
-    IF ( NOT Qt5Widgets_FOUND )
-        FIND_PACKAGE(Qt4 REQUIRED)
-    ENDIF()
-ENDIF()
-
-#If we have found Qt5, let's try to top off by getting the webkit as well
-IF ( Qt5Widgets_FOUND )
-    FIND_PACKAGE(Qt5WebKitWidgets QUIET)
-
-    IF(COMMAND cmake_policy)
-        IF(${CMAKE_MAJOR_VERSION} GREATER 2)
-            # Qt5 qt5_use_modules usage was causing "Policy CMP0043 is not set: Ignore COMPILE_DEFINITIONS_<Config> properties." warnings
-            cmake_policy(SET CMP0043 NEW)
-        ENDIF()
-    ENDIF()
-ENDIF()
+FIND_PACKAGE(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
 
 
 ################################################################################
@@ -921,11 +854,7 @@ IF(CMAKE_CPACK_COMMAND)
 ENDIF()
 
 # Generate pkg-config configuration files
-IF ( Qt5Widgets_FOUND )
-    SET ( PKGCONFIG_MODULE_NAME osgQt5 )
-ELSE()
-    SET ( PKGCONFIG_MODULE_NAME osgQt )
-ENDIF()
+SET ( PKGCONFIG_MODULE_NAME osgQt )
 
 CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/pkgconfig/openscenegraph-osgQt.pc.in
   ${PROJECT_BINARY_DIR}/packaging/pkgconfig/openscenegraph-${PKGCONFIG_MODULE_NAME}.pc

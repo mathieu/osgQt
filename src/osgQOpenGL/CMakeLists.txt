@@ -6,7 +6,7 @@ IF ( Qt5Widgets_FOUND )
 
     set(CMAKE_INCLUDE_CURRENT_DIR yes)
 
-    SET(HEADER_PATH ${OpenSceneGraph_SOURCE_DIR}/include/osgQOpenGL)
+    SET(HEADER_PATH ../../include/osgQOpenGL)
 
     SET(SOURCE_H 
         ${HEADER_PATH}/osgQOpenGLWidget
@@ -14,10 +14,6 @@ IF ( Qt5Widgets_FOUND )
         ${HEADER_PATH}/OSGRenderer
     )
 
-#[[    foreach(header ${SOURCE_H})
-        set(MOC_OPTIONS "${MOC_OPTIONS} -f${header}")
-    endforeach(header)
-]]
     qt5_wrap_cpp(SOURCES_H_MOC ${SOURCE_H} #[[OPTIONS ${MOC_OPTIONS}]])
 
     SET(TARGET_H
@@ -26,7 +22,7 @@ IF ( Qt5Widgets_FOUND )
         ${HEADER_PATH}/GraphicsWindowEx
         ${HEADER_PATH}/RenderStageEx
         ${HEADER_PATH}/StateEx
-        ${CMAKE_CURRENT_BINARY_DIR}/osgQOpenGL/Export
+        ${CMAKE_CURRENT_BINARY_DIR}/Export
     )
 
 
@@ -42,11 +38,18 @@ IF ( Qt5Widgets_FOUND )
         ${OPENSCENEGRAPH_VERSIONINFO_RC}
     )
 
-    SET(TARGET_LIBRARIES  ${OPENSCENEGRAPH_LIBRARIES})
+    SET(TARGET_LIBRARIES Qt5::Widgets Qt5::OpenGL)
+    SET(TARGET_LIBRARIES_VARS
+        OSG_LIBRARY
+        OSGUTIL_LIBRARY
+        OSGVIEWER_LIBRARY
+        OSGGA_LIBRARY
+        OSGDB_LIBRARY
+        OPENTHREADS_LIBRARY
+    )
 
     SETUP_LIBRARY(${LIB_NAME})
 
-	generate_export_header(${LIB_NAME} EXPORT_FILE_NAME "osgQOpenGL/Export")
-	
-    target_link_libraries(${LIB_NAME} Qt5::Widgets Qt5::OpenGL)
+    generate_export_header(${LIB_NAME} EXPORT_FILE_NAME "Export")
+
 ENDIF()
