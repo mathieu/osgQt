@@ -1,119 +1,236 @@
-#include <QTimer>
-#include <QApplication>
-#include <QGridLayout>
+/*  -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2010 Robert Osfield
 
-#include <osgViewer/CompositeViewer>
-#include <osgViewer/ViewerEventHandlers>
+    This application is open source and may be redistributed and/or modified
+    freely and without restriction, both in commercial and non commercial applications,
+    as long as this copyright notice is maintained.
 
-#include <osgGA/MultiTouchTrackballManipulator>
+    This application is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+*/
+
+#include <osgQOpenGL/osgQOpenGLWidget>
 
 #include <osgDB/ReadFile>
+#include <osgUtil/Optimizer>
+#include <osg/CoordinateSystemNode>
 
-#include <osgQt/GraphicsWindowQt>
+#include <osg/Switch>
+#include <osg/Types>
+#include <osgText/Text>
+
+#include <osgViewer/Viewer>
+#include <osgViewer/ViewerEventHandlers>
+
+#include <osgGA/TrackballManipulator>
+#include <osgGA/FlightManipulator>
+#include <osgGA/DriveManipulator>
+#include <osgGA/KeySwitchMatrixManipulator>
+#include <osgGA/StateSetManipulator>
+#include <osgGA/AnimationPathManipulator>
+#include <osgGA/TerrainManipulator>
+#include <osgGA/SphericalManipulator>
+
+#include <osgGA/Device>
+
+#include <QApplication>
+#include <QSurfaceFormat>
 
 #include <iostream>
 
-class ViewerWidget : public QWidget, public osgViewer::CompositeViewer
+
+int main(int argc, char** argv)
 {
-public:
-    ViewerWidget(QWidget* parent = 0, Qt::WindowFlags f = 0, osgViewer::ViewerBase::ThreadingModel threadingModel=osgViewer::CompositeViewer::SingleThreaded) : QWidget(parent, f)
-    {
-        setThreadingModel(threadingModel);
 
-        // disable the default setting of viewer.done() by pressing Escape.
-        setKeyEventSetsDone(0);
 
-        QWidget* widget1 = addViewWidget( createGraphicsWindow(0,0,100,100), osgDB::readRefNodeFile("cow.osgt") );
-        QWidget* widget2 = addViewWidget( createGraphicsWindow(0,0,100,100), osgDB::readRefNodeFile("glider.osgt") );
-        QWidget* widget3 = addViewWidget( createGraphicsWindow(0,0,100,100), osgDB::readRefNodeFile("axes.osgt") );
-        QWidget* widget4 = addViewWidget( createGraphicsWindow(0,0,100,100), osgDB::readRefNodeFile("fountain.osgt") );
-        QWidget* popupWidget = addViewWidget( createGraphicsWindow(900,100,320,240,"Popup window",true), osgDB::readRefNodeFile("dumptruck.osgt") );
-        popupWidget->show();
+    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
 
-        QGridLayout* grid = new QGridLayout;
-        grid->addWidget( widget1, 0, 0 );
-        grid->addWidget( widget2, 0, 1 );
-        grid->addWidget( widget3, 1, 0 );
-        grid->addWidget( widget4, 1, 1 );
-        setLayout( grid );
-
-        connect( &_timer, SIGNAL(timeout()), this, SLOT(update()) );
-        _timer.start( 10 );
-    }
-
-    QWidget* addViewWidget( osgQt::GraphicsWindowQt* gw, osg::ref_ptr<osg::Node> scene )
-    {
-        osgViewer::View* view = new osgViewer::View;
-        addView( view );
-
-        osg::Camera* camera = view->getCamera();
-        camera->setGraphicsContext( gw );
-
-        const osg::GraphicsContext::Traits* traits = gw->getTraits();
-
-        camera->setClearColor( osg::Vec4(0.2, 0.2, 0.6, 1.0) );
-        camera->setViewport( new osg::Viewport(0, 0, traits->width, traits->height) );
-        camera->setProjectionMatrixAsPerspective(30.0f, static_cast<double>(traits->width)/static_cast<double>(traits->height), 1.0f, 10000.0f );
-
-        view->setSceneData( scene );
-        view->addEventHandler( new osgViewer::StatsHandler );
-        view->setCameraManipulator( new osgGA::MultiTouchTrackballManipulator );
-        gw->setTouchEventsEnabled( true );
-        return gw->getGLWidget();
-    }
-
-    osgQt::GraphicsWindowQt* createGraphicsWindow( int x, int y, int w, int h, const std::string& name="", bool windowDecoration=false )
-    {
-        osg::DisplaySettings* ds = osg::DisplaySettings::instance().get();
-        osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
-        traits->windowName = name;
-        traits->windowDecoration = windowDecoration;
-        traits->x = x;
-        traits->y = y;
-        traits->width = w;
-        traits->height = h;
-        traits->doubleBuffer = true;
-        traits->alpha = ds->getMinimumNumAlphaBits();
-        traits->stencil = ds->getMinimumNumStencilBits();
-        traits->sampleBuffers = ds->getMultiSamples();
-        traits->samples = ds->getNumMultiSamples();
-
-        return new osgQt::GraphicsWindowQt(traits.get());
-    }
-
-    virtual void paintEvent( QPaintEvent* /*event*/ )
-    { frame(); }
-
-protected:
-
-    QTimer _timer;
-};
-
-int main( int argc, char** argv )
-{
-    osg::ArgumentParser arguments(&argc, argv);
-
-#if QT_VERSION >= 0x050000
-    // Qt5 is currently crashing and reporting "Cannot make QOpenGLContext current in a different thread" when the viewer is run multi-threaded, this is regression from Qt4
-    osgViewer::ViewerBase::ThreadingModel threadingModel = osgViewer::ViewerBase::SingleThreaded;
+#ifdef OSG_GL3_AVAILABLE
+    format.setVersion(3, 2);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setRenderableType(QSurfaceFormat::OpenGL);
+    format.setOption(QSurfaceFormat::DebugContext);
 #else
-    osgViewer::ViewerBase::ThreadingModel threadingModel = osgViewer::ViewerBase::CullDrawThreadPerContext;
+    format.setVersion(2, 0);
+    format.setProfile(QSurfaceFormat::CompatibilityProfile);
+    format.setRenderableType(QSurfaceFormat::OpenGL);
+    format.setOption(QSurfaceFormat::DebugContext);
 #endif
-
-    while (arguments.read("--SingleThreaded")) threadingModel = osgViewer::ViewerBase::SingleThreaded;
-    while (arguments.read("--CullDrawThreadPerContext")) threadingModel = osgViewer::ViewerBase::CullDrawThreadPerContext;
-    while (arguments.read("--DrawThreadPerContext")) threadingModel = osgViewer::ViewerBase::DrawThreadPerContext;
-    while (arguments.read("--CullThreadPerCameraDrawThreadPerContext")) threadingModel = osgViewer::ViewerBase::CullThreadPerCameraDrawThreadPerContext;
-
-#if QT_VERSION >= 0x040800
-    // Required for multithreaded QGLWidget on Linux/X11, see http://blog.qt.io/blog/2011/06/03/threaded-opengl-in-4-8/
-    if (threadingModel != osgViewer::ViewerBase::SingleThreaded)
-        QApplication::setAttribute(Qt::AA_X11InitThreads);
-#endif
+    format.setDepthBufferSize(24);
+    //format.setAlphaBufferSize(8);
+    format.setSamples(8);
+    format.setStencilBufferSize(8);
+    format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+    QSurfaceFormat::setDefaultFormat(format);
 
     QApplication app(argc, argv);
-    ViewerWidget* viewWidget = new ViewerWidget(0, Qt::Widget, threadingModel);
-    viewWidget->setGeometry( 100, 100, 800, 600 );
-    viewWidget->show();
+
+    // use an ArgumentParser object to manage the program arguments.
+    osg::ArgumentParser arguments(&argc, argv);
+
+    arguments.getApplicationUsage()->setApplicationName(
+        arguments.getApplicationName());
+    arguments.getApplicationUsage()->setDescription(arguments.getApplicationName() +
+                                                    " is the standard OpenSceneGraph example which loads and visualises 3d models.");
+    arguments.getApplicationUsage()->setCommandLineUsage(
+        arguments.getApplicationName() + " [options] filename ...");
+    arguments.getApplicationUsage()->addCommandLineOption("--image <filename>",
+                                                          "Load an image and render it on a quad");
+    arguments.getApplicationUsage()->addCommandLineOption("--dem <filename>",
+                                                          "Load an image/DEM and render it on a HeightField");
+    arguments.getApplicationUsage()->addCommandLineOption("--login <url> <username> <password>",
+                                                          "Provide authentication information for http file access.");
+    arguments.getApplicationUsage()->addCommandLineOption("-p <filename>",
+                                                          "Play specified camera path animation file, previously saved with 'z' key.");
+    arguments.getApplicationUsage()->addCommandLineOption("--speed <factor>",
+                                                          "Speed factor for animation playing (1 == normal speed).");
+    arguments.getApplicationUsage()->addCommandLineOption("--device <device-name>",
+                                                          "add named device to the viewer");
+
+    osgQOpenGLWidget widget(&arguments);
+
+    QObject::connect(&widget, &osgQOpenGLWidget::initialized,   [  &arguments,
+                                                                   &widget ]
+    {
+        unsigned int helpType = 0;
+
+        if((helpType = arguments.readHelpType()))
+        {
+            arguments.getApplicationUsage()->write(std::cout, helpType);
+            return 1;
+        }
+
+        // report any errors if they have occurred when parsing the program arguments.
+        if(arguments.errors())
+        {
+            arguments.writeErrorMessages(std::cout);
+            return 1;
+        }
+
+        if(arguments.argc() <= 1)
+        {
+            arguments.getApplicationUsage()->write(std::cout,
+            osg::ApplicationUsage::COMMAND_LINE_OPTION);
+            return 1;
+        }
+
+        std::string url, username, password;
+
+        while(arguments.read("--login", url, username, password))
+        {
+            osgDB::Registry::instance()->getOrCreateAuthenticationMap()->addAuthenticationDetails(
+                url,
+                new osgDB::AuthenticationDetails(username, password)
+            );
+        }
+
+        std::string device;
+
+        while(arguments.read("--device", device))
+        {
+            osg::ref_ptr<osgGA::Device> dev = osgDB::readRefFile<osgGA::Device>(device);
+
+            if(dev.valid())
+            {
+                widget.getOsgViewer()->addDevice(dev);
+            }
+        }
+
+        // set up the camera manipulators.
+        {
+            osg::ref_ptr<osgGA::KeySwitchMatrixManipulator> keyswitchManipulator = new osgGA::KeySwitchMatrixManipulator;
+
+            keyswitchManipulator->addMatrixManipulator('1', "Trackball", new osgGA::TrackballManipulator());
+            keyswitchManipulator->addMatrixManipulator('2', "Flight", new osgGA::FlightManipulator());
+            keyswitchManipulator->addMatrixManipulator('3', "Drive", new osgGA::DriveManipulator());
+            keyswitchManipulator->addMatrixManipulator('4', "Terrain", new osgGA::TerrainManipulator());
+            keyswitchManipulator->addMatrixManipulator('5', "Orbit", new osgGA::OrbitManipulator());
+            keyswitchManipulator->addMatrixManipulator('6', "FirstPerson", new osgGA::FirstPersonManipulator());
+            keyswitchManipulator->addMatrixManipulator('7', "Spherical", new osgGA::SphericalManipulator());
+
+            std::string pathfile;
+            double animationSpeed = 1.0;
+
+            while(arguments.read("--speed", animationSpeed)) {}
+            char keyForAnimationPath = '8';
+
+            while(arguments.read("-p", pathfile))
+            {
+                osgGA::AnimationPathManipulator* apm = new osgGA::AnimationPathManipulator(
+                    pathfile);
+
+                if(apm || !apm->valid())
+                {
+                    apm->setTimeScale(animationSpeed);
+
+                    unsigned int num = keyswitchManipulator->getNumMatrixManipulators();
+                    keyswitchManipulator->addMatrixManipulator(keyForAnimationPath, "Path", apm);
+                    keyswitchManipulator->selectMatrixManipulator(num);
+                    ++keyForAnimationPath;
+                }
+            }
+
+            widget.getOsgViewer()->setCameraManipulator(keyswitchManipulator.get());
+        }
+
+        // add the state manipulator
+        widget.getOsgViewer()->addEventHandler(new osgGA::StateSetManipulator(widget.getOsgViewer()->getCamera()->getOrCreateStateSet()));
+
+        // add the thread model handler
+        widget.getOsgViewer()->addEventHandler(new osgViewer::ThreadingHandler);
+
+        // add the window size toggle handler
+        widget.getOsgViewer()->addEventHandler(new osgViewer::WindowSizeHandler);
+
+        // add the stats handler
+        widget.getOsgViewer()->addEventHandler(new osgViewer::StatsHandler);
+
+        // add the help handler
+        widget.getOsgViewer()->addEventHandler(new osgViewer::HelpHandler(arguments.getApplicationUsage()));
+
+        // add the record camera path handler
+        widget.getOsgViewer()->addEventHandler(new osgViewer::RecordCameraPathHandler);
+
+        // add the LOD Scale handler
+        widget.getOsgViewer()->addEventHandler(new osgViewer::LODScaleHandler);
+
+        // add the screen capture handler
+        widget.getOsgViewer()->addEventHandler(new osgViewer::ScreenCaptureHandler);
+
+        // load the data
+        osg::ref_ptr<osg::Node> loadedModel = osgDB::readRefNodeFiles(arguments);
+
+        if(!loadedModel)
+        {
+            std::cout << arguments.getApplicationName() << ": No data loaded" << std::endl;
+            return 1;
+        }
+
+        // any option left unread are converted into errors to write out later.
+        arguments.reportRemainingOptionsAsUnrecognized();
+
+        // report any errors if they have occurred when parsing the program arguments.
+        if(arguments.errors())
+        {
+            arguments.writeErrorMessages(std::cout);
+            return 1;
+        }
+
+
+        // optimize the scene graph, remove redundant nodes and state etc.
+        osgUtil::Optimizer optimizer;
+        optimizer.optimize(loadedModel);
+
+        widget.getOsgViewer()->setSceneData(loadedModel);
+
+        //        widget.getOsgViewer()->realize();
+
+        return 0;
+    });
+
+
+    widget.show();
+
     return app.exec();
+
 }
