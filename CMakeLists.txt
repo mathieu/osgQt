@@ -854,7 +854,7 @@ IF(CMAKE_CPACK_COMMAND)
 ENDIF()
 
 # Generate pkg-config configuration files
-SET ( PKGCONFIG_MODULE_NAME osgQt )
+    SET ( PKGCONFIG_MODULE_NAME osgQt )
 
 CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/pkgconfig/openscenegraph-osgQt.pc.in
   ${PROJECT_BINARY_DIR}/packaging/pkgconfig/openscenegraph-${PKGCONFIG_MODULE_NAME}.pc
