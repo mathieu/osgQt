@@ -60,7 +60,11 @@ void osgQOpenGLWidget::resizeGL(int w, int h)
 void osgQOpenGLWidget::paintGL()
 {
     OpenThreads::ScopedReadLock locker(_osgMutex);
-    m_renderer->frame();
+	if (_isFirstFrame) {
+		_isFirstFrame = false;
+		m_renderer->getCamera()->getGraphicsContext()->setDefaultFboId(defaultFramebufferObject());
+	}
+	m_renderer->frame();
 }
 
 void osgQOpenGLWidget::keyPressEvent(QKeyEvent* event)
@@ -205,9 +209,12 @@ void osgQOpenGLWidget::createRenderer()
 {
     // call this before creating a View...
     setDefaultDisplaySettings();
-
-    m_renderer = new OSGRenderer(_arguments, this);
-    QScreen* screen = windowHandle()
+	if (!_arguments) {
+		m_renderer = new OSGRenderer(this);
+	} else {
+		m_renderer = new OSGRenderer(_arguments, this);
+	}
+	QScreen* screen = windowHandle()
                       && windowHandle()->screen() ? windowHandle()->screen() :
                       qApp->screens().front();
     m_renderer->setupOSG(width(), height(), screen->devicePixelRatio());
