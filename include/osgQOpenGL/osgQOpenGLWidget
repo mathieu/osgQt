@@ -53,7 +53,10 @@ public:
 
     //! get mutex
     virtual OpenThreads::ReadWriteMutex* mutex();
-
+    
+    //! override this to change default size or aspect ratio 
+    QSize sizeHint() const override { return QSize(640,480); }
+    
 signals:
     void initialized();
 
