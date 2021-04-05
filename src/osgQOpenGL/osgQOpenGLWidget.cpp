@@ -140,7 +140,9 @@ void osgQOpenGLWidget::keyPressEvent(QKeyEvent* event)
             showNormal();
             setMinimumSize(g);
             QMainWindow* _mainwindow = dynamic_cast<QMainWindow*>(parent());
-            _mainwindow->setCentralWidget(this);
+            if(_mainwindow){
+                _mainwindow->setCentralWidget(this);
+            }
 
             if(layout())
                 layout()->setContentsMargins(sMargins);
