@@ -1,53 +1,8 @@
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-IF(WIN32)
-    CMAKE_MINIMUM_REQUIRED(VERSION 2.4.6 FATAL_ERROR)
-ELSE(WIN32)
-    IF(APPLE)
-        CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0 FATAL_ERROR)
-    ELSE(APPLE)
-        CMAKE_MINIMUM_REQUIRED(VERSION 2.4.4 FATAL_ERROR)
-    ENDIF(APPLE)
-ENDIF(WIN32)
 
-if(COMMAND cmake_policy)
-    # Works around warnings libraries linked against that don't
-    # have absolute paths (e.g. -lpthreads)
-    cmake_policy(SET CMP0003 NEW)
-
-    # Works around warnings about escaped quotes in ADD_DEFINITIONS
-    # statements.
-    cmake_policy(SET CMP0005 NEW)
-
-    # tell CMake to prefer CMake's own CMake modules when available
-    # only available from cmake-2.8.4
-    if(${CMAKE_MAJOR_VERSION} GREATER 2 OR
-        (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} GREATER 8) OR
-        (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} EQUAL 8 AND ${CMAKE_PATCH_VERSION} GREATER 3))
-        cmake_policy(SET CMP0017 NEW)
-    endif()
-
-    # cmake-2.6.1 introduces policy cmp0008 decide how to treat full path libraries that do not appear to be valid library file names
-    # quote from cvslog "Such libraries worked by accident in the VS IDE and Xcode generators in CMake 2.4 and below."
-    if(${CMAKE_MAJOR_VERSION} GREATER 2 OR
-        (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} GREATER 6) OR
-        (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} EQUAL 6 AND ${CMAKE_PATCH_VERSION} GREATER 0))
-        cmake_policy(SET CMP0008 OLD)
-    endif()
-
-    # disable autolinking to qtmain as we have our own main() functions (new in Qt 5.1)
-    if(${CMAKE_MAJOR_VERSION} GREATER 2 OR
-        (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} GREATER 8) OR
-        (${CMAKE_MAJOR_VERSION} EQUAL 2 AND ${CMAKE_MINOR_VERSION} EQUAL 8 AND ${CMAKE_PATCH_VERSION} GREATER 10))
-        cmake_policy(SET CMP0020 OLD)
-    endif()
-    # nicer version check - but needs at least CMake 2.6.2? Worth upgrading the requirements?
-    #if("${CMAKE_VERSION}" VERSION_GREATER 2.8.10)
-    # or even easier (available in cmake-2.6)
-    #if(POLICY CMPxyzw)
-
-endif()
+CMAKE_MINIMUM_REQUIRED(VERSION 3.0.0 FATAL_ERROR)
 
 IF(APPLE)
   # Get OSX version in MAJOR.MINOR format
@@ -92,6 +47,12 @@ IF(APPLE)
     SET(CMAKE_OSX_SYSROOT "${IPHONE_SDKROOT}" CACHE STRING "System root for iOS" FORCE)
 
   ELSE()
+    foreach(APPLE_SDK_VERSION 10 11 12 13 14 15)
+        if (IS_DIRECTORY "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.${APPLE_SDK_VERSION}.sdk")
+            set(CMAKE_OSX_SYSROOT "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.${APPLE_SDK_VERSION}.sdk")
+        endif()
+    endforeach(APPLE_SDK_VERSION)
+
     # OSX >= 10.5 uses Cocoa windowing system, otherwise Carbon
     IF(OSG_OSX_VERSION VERSION_LESS 10.5)
       SET(OSG_WINDOWING_SYSTEM "Carbon" CACHE STRING "Windowing system type for graphics window creation, options Carbon, Cocoa or X11.")
@@ -103,7 +64,11 @@ IF(APPLE)
     # and 32/64-bit Intel/PPC on >= 10.5. Anything <= 10.3 doesn't support.
     # These are set the first time CMake is run, and can be changed by
     # the user at any time.
-    IF(OSG_OSX_VERSION VERSION_GREATER 10.7)
+    IF(OSG_OSX_VERSION VERSION_GREATER 10.8)
+      # 64 Bit Works, i386,ppc is not supported any more
+      SET(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "Build architectures for OSX")
+      SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.10" CACHE STRING "Target OSX version")
+    ELSEIF(OSG_OSX_VERSION VERSION_GREATER 10.7)
       # 64 Bit Works, i386,ppc is not supported any more
       SET(CMAKE_OSX_ARCHITECTURES "x86_64" CACHE STRING "Build architectures for OSX")
       SET(CMAKE_OSX_DEPLOYMENT_TARGET "10.8" CACHE STRING "Target OSX version")
@@ -127,7 +92,7 @@ ENDIF()
 
 PROJECT(osgQt)
 
-FIND_PACKAGE(OpenSceneGraph 3.5.5 REQUIRED osgDB osgGA osgUtil osgText osgViewer osgWidget)
+FIND_PACKAGE(OpenSceneGraph 3.6.0 REQUIRED osgDB osgGA osgUtil osgText osgViewer osgWidget)
 SET(OPENSCENEGRAPH_SOVERSION 145)
 
 SET(OSG_PLUGINS osgPlugins-${OPENSCENEGRAPH_VERSION})
@@ -150,7 +115,7 @@ SET(OpenSceneGraph_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # We have some custom .cmake scripts not in the official distribution.
 # Maybe this can be used override existing behavior if needed?
-SET(CMAKE_MODULE_PATH "${OpenSceneGraph_SOURCE_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
+SET(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
 
 # Change the default build type to Release
 IF(NOT CMAKE_BUILD_TYPE)
@@ -292,6 +257,7 @@ IF(APPLE)
         ENDIF()
 
         FIND_PACKAGE(OpenGL)
+        add_definitions(-DGL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED)
     ENDIF ()
 
     OPTION(OSG_COMPILE_FRAMEWORKS "compile frameworks instead of dylibs (experimental)" OFF)
@@ -304,7 +270,8 @@ ENDIF()
 
 INCLUDE_DIRECTORIES(
     ${OPENSCENEGRAPH_INCLUDE_DIRS}
-    ${OpenSceneGraph_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_LIST_DIR}/include
+    ${CMAKE_CURRENT_BINARY_DIR}/src
     ${OPENGL_INCLUDE_DIR}
 )
 
@@ -427,26 +394,20 @@ ENDIF(WIN32 AND NOT ANDROID)
 
 ################################################################################
 # Set Version Info resource file
-
-
-IF(MSVC)
-    SET(OPENSCENEGRAPH_VERSIONINFO_RC "${PROJECT_BINARY_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc")
-    CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc.in"
-                   "${OPENSCENEGRAPH_VERSIONINFO_RC}")
-ENDIF()
+#
+# Removed for now as this relates to OSG version
+# IF(MSVC)
+#     SET(OPENSCENEGRAPH_VERSIONINFO_RC "${PROJECT_BINARY_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc")
+#     CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc.in"
+#                    "${OPENSCENEGRAPH_VERSIONINFO_RC}")
+# ENDIF()
 
 ################################################################################
 # Optional build components
 
 
 # OSG Examples
-OPTION(BUILD_OSG_EXAMPLES "Enable to build OSG Examples" OFF)
-
-################################################################################
-# 3rd Party Dependency Stuff
-IF(WIN32)
-    INCLUDE(Find3rdPartyDependencies)
-ENDIF()
+OPTION(BUILD_OSG_EXAMPLES "Enable to build OSG Examples" ON)
 
 #
 # If you want to prevent CMake from picking up on any of the following optional 3rd Party dependencies in CMake 2.8 onwards
@@ -462,46 +423,7 @@ INCLUDE(OsgMacroUtils)
 # via cmake -DDESIRED_QT_VERSION=5
 # QUIET option disables messages if the package cannot be found.
 
-IF  (DESIRED_QT_VERSION)
-    IF  (DESIRED_QT_VERSION MATCHES 5)
-        FIND_PACKAGE(Qt5Widgets REQUIRED)
-    ELSEIF (DESIRED_QT_VERSION MATCHES 4)
-        FIND_PACKAGE(Qt4 REQUIRED)
-    ENDIF()
-
-ELSE()
-
-    FIND_PACKAGE(Qt5Widgets QUIET)
-
-    IF ( Qt5Widgets_FOUND )
-        # CMake 2.8.8 or greater required
-        BUILDER_VERSION_GREATER(2 8 7)
-        IF(NOT VALID_BUILDER_VERSION)
-            MESSAGE(
-            SEND_ERROR
-            "Qt5 requires CMake version 2.8.8 or greater!\n"
-            "Update CMake or set DESIRED_QT_VERSION to less than 5
-            or disable OSG_USE_QT."
-            )
-        ENDIF( )
-    ENDIF( )
-
-    IF ( NOT Qt5Widgets_FOUND )
-        FIND_PACKAGE(Qt4 REQUIRED)
-    ENDIF()
-ENDIF()
-
-#If we have found Qt5, let's try to top off by getting the webkit as well
-IF ( Qt5Widgets_FOUND )
-    FIND_PACKAGE(Qt5WebKitWidgets QUIET)
-
-    IF(COMMAND cmake_policy)
-        IF(${CMAKE_MAJOR_VERSION} GREATER 2)
-            # Qt5 qt5_use_modules usage was causing "Policy CMP0043 is not set: Ignore COMPILE_DEFINITIONS_<Config> properties." warnings
-            cmake_policy(SET CMP0043 NEW)
-        ENDIF()
-    ENDIF()
-ENDIF()
+FIND_PACKAGE(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
 
 
 ################################################################################
@@ -884,10 +806,6 @@ IF(BUILD_DOCUMENTATION)
         SET(GENERATE_TAGFILE "${OpenSceneGraph_BINARY_DIR}/doc/OpenThreadsReferenceDocs/ot.tag")
     ENDIF()
 
-    # This processes our openthreads.doxyfile.cmake and generate a final doxyfile
-    CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/doc/Doxyfiles/openthreads.doxyfile.cmake
-        ${PROJECT_BINARY_DIR}/doc/openthreads.doxyfile
-    )
     # copy the osg logo to documentations target folder
     CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/PlatformSpecifics/Windows/icons/src/osg32-32.png
         ${PROJECT_BINARY_DIR}/doc/OpenThreadsReferenceDocs/osg32-32.png COPYONLY
@@ -936,18 +854,13 @@ IF(CMAKE_CPACK_COMMAND)
 ENDIF()
 
 # Generate pkg-config configuration files
+    SET ( PKGCONFIG_MODULE_NAME osgQt )
 
-SET(PKGCONFIG_FILES
-  openscenegraph-osgQt
-)
-
-FOREACH(PKGCONFIG_FILE ${PKGCONFIG_FILES})
-  CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/pkgconfig/${PKGCONFIG_FILE}.pc.in
-    ${PROJECT_BINARY_DIR}/packaging/pkgconfig/${PKGCONFIG_FILE}.pc
-    @ONLY
-    )
-  INSTALL(FILES ${PROJECT_BINARY_DIR}/packaging/pkgconfig/${PKGCONFIG_FILE}.pc DESTINATION lib${LIB_POSTFIX}/pkgconfig COMPONENT libopenscenegraph-dev)
-ENDFOREACH(PKGCONFIG_FILE)
+CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/pkgconfig/openscenegraph-osgQt.pc.in
+  ${PROJECT_BINARY_DIR}/packaging/pkgconfig/openscenegraph-${PKGCONFIG_MODULE_NAME}.pc
+  @ONLY
+  )
+INSTALL(FILES ${PROJECT_BINARY_DIR}/packaging/pkgconfig/openscenegraph-${PKGCONFIG_MODULE_NAME}.pc DESTINATION lib${LIB_POSTFIX}/pkgconfig COMPONENT libopenscenegraph-dev)
 
 
 # Run this as late as possible so users can easier spot the message
@@ -963,19 +876,19 @@ IF(REQUIRES_LIBPATH_MESSAGE)
             "Your applications may not be able to find your installed libraries unless you:\n"
             "    set your LD_LIBRARY_PATH (user specific) or\n"
             "    update your ld.so configuration (system wide)")
-        IF(IS_DIRECTORY /etc/ld.so.conf.d)
+        IF(IS_DIRECTORY /etc/ld.so.conf.d AND EXISTS ${PROJECT_SOURCE_DIR}/packaging/ld.so.conf.d/openscenegraph-osgQt.conf.in)
             MESSAGE("You have an ld.so.conf.d directory on your system, so if you wish to ensure that\n"
                 "applications find the installed osg libraries, system wide, you could install an\n"
                 "OpenSceneGraph specific ld.so configuration with:\n"
                 "    sudo make install_ld_conf\n")
-            CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/ld.so.conf.d/openscenegraph.conf.in
-                ${PROJECT_BINARY_DIR}/packaging/ld.so.conf.d/openscenegraph.conf
+            CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/packaging/ld.so.conf.d/openscenegraph-osgQt.conf.in
+                ${PROJECT_BINARY_DIR}/packaging/ld.so.conf.d/openscenegraph-osgQt.conf
             )
             ADD_CUSTOM_TARGET(install_ld_conf ${CMAKE_COMMAND} -E copy_if_different
-                ${PROJECT_BINARY_DIR}/packaging/ld.so.conf.d/openscenegraph.conf
-                /etc/ld.so.conf.d/openscenegraph.conf
+                ${PROJECT_BINARY_DIR}/packaging/ld.so.conf.d/openscenegraph-osgQt.conf
+                /etc/ld.so.conf.d/openscenegraph-osgQt.conf
                 COMMAND ldconfig
-                COMMENT "Copying openscenegraph.conf to /etc/ld.so.conf.d and running ldconfig"
+                COMMENT "Copying openscenegraph-osgQt.conf to /etc/ld.so.conf.d and running ldconfig"
             )
         ELSE()
             IF(EXISTS /etc/ld.so.conf)

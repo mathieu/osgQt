@@ -43,9 +43,13 @@ SET(VALID_BUILDER_VERSION OFF)
 MACRO(LINK_WITH_VARIABLES TRGTNAME)
     FOREACH(varname ${ARGN})
         IF(${varname}_DEBUG)
-            TARGET_LINK_LIBRARIES(${TRGTNAME} optimized "${${varname}}" debug "${${varname}_DEBUG}")
+            IF(${varname}_RELEASE)
+                TARGET_LINK_LIBRARIES(${TRGTNAME} optimized "${${varname}_RELEASE}" debug "${${varname}_DEBUG}")
+            ELSE(${varname}_RELEASE)
+                TARGET_LINK_LIBRARIES(${TRGTNAME} optimized "${${varname}}" debug "${${varname}_DEBUG}")
+            ENDIF(${varname}_RELEASE)
         ELSE(${varname}_DEBUG)
-            TARGET_LINK_LIBRARIES(${TRGTNAME} "${${varname}}" )
+            TARGET_LINK_LIBRARIES(${TRGTNAME} ${${varname}} )
         ENDIF(${varname}_DEBUG)
     ENDFOREACH(varname)
 ENDMACRO(LINK_WITH_VARIABLES TRGTNAME)
@@ -209,6 +213,7 @@ ENDMACRO(SET_OUTPUT_DIR_PROPERTY_260 TARGET_TARGETNAME RELATIVE_OUTDIR)
 #  TARGET_LIBRARIES are the libraries to link to that are internal to the project and have d suffix for debug
 #  TARGET_EXTERNAL_LIBRARIES are external libraries and are not differentiated with d suffix
 #  TARGET_LABEL is the label IDE should show up for targets
+#  HEADER_INSTALL_DIR the directory relative to include/ where the ModuleInstall script installs the headers - defaults to LIB_NAME
 ##########################################################################################################
 
 MACRO(SETUP_LIBRARY LIB_NAME)
